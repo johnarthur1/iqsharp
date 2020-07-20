@@ -64,7 +64,10 @@ namespace Microsoft.Quantum.IQSharp.Core.ExecutionPathTracer
             // Parse operations at specified depth
             else if (this.currentDepth == this.renderDepth)
             {
-                var metadata = operation.GetRuntimeMetadata(arguments);
+                var metadata = (operation.Name.StartsWith("ApplyToEach") ||
+                                operation.Name.StartsWith("ForEach"))
+                    ? new RuntimeMetadata() { IsComposite = true }
+                    : operation.GetRuntimeMetadata(arguments);
                 if (metadata == null) return;
 
                 // If metadata is a composite operation (i.e. want to trace its components instead),
@@ -173,10 +176,20 @@ namespace Microsoft.Quantum.IQSharp.Core.ExecutionPathTracer
         {
             if (metadata == null) return null;
 
+            var displayArgs = (metadata.FormattedNonQubitArgs.Length > 0)
+                ? metadata.FormattedNonQubitArgs
+                : null;
+
+            // Add surrounding parenthesis if displayArgs is not a tuple
+            if (displayArgs != null && !displayArgs.StartsWith("("))
+            {
+                displayArgs = $"({displayArgs})";
+            }
+
             var op = new Operation()
             {
                 Gate = metadata.Label,
-                DisplayArgs = (metadata.FormattedNonQubitArgs.Length > 0) ? metadata.FormattedNonQubitArgs : null,
+                DisplayArgs = displayArgs,
                 Children = metadata.Children?.Select(child => child.Select(this.MetadataToOperation).WhereNotNull()),
                 Controlled = metadata.IsControlled,
                 Adjoint = metadata.IsAdjoint,
