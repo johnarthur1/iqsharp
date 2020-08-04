@@ -5,12 +5,30 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Quantum.Simulation.Common;
 using Microsoft.Quantum.Simulation.Core;
 
 namespace Microsoft.Quantum.IQSharp.Core.ExecutionPathTracer
 {
+    public class TracerApplyIfElse : Microsoft.Quantum.Simulation.QuantumProcessor.Extensions.ApplyIfElseR<Qubit, Qubit>
+    {
+        private SimulatorBase Simulator { get; }
+
+        public TracerApplyIfElse(SimulatorBase m) : base(m)
+        {
+            this.Simulator = m;
+        }
+
+        public override Func<(Result, (ICallable, Qubit), (ICallable, Qubit)), QVoid> Body => (q) =>
+        {
+            (Result measurementResult, (ICallable onZero, Qubit one), (ICallable onOne, Qubit two)) = q;
+            onZero.Apply(QVoid.Instance);
+            onOne.Apply(QVoid.Instance);
+
+            return QVoid.Instance;
+        };
+    }
+
     /// <summary>
     /// Extension methods to be used with and by <see cref="ExecutionPathTracer">.
     /// </summary>
@@ -25,6 +43,10 @@ namespace Microsoft.Quantum.IQSharp.Core.ExecutionPathTracer
         {
             sim.OnOperationStart += tracer.OnOperationStartHandler;
             sim.OnOperationEnd += tracer.OnOperationEndHandler;
+            sim.Register(
+                typeof(Microsoft.Quantum.Canon.ApplyIfElseR<Qubit, Qubit>),
+                typeof(TracerApplyIfElse)
+            );
             return sim;
         }
 

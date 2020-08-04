@@ -4,6 +4,7 @@
 namespace Tests.ExecutionPathTracer {
     
     open Microsoft.Quantum.Intrinsic;
+    open Microsoft.Quantum.Canon;
 
     // Custom operation
     operation Foo(theta : Double, (qubit : Qubit, bar : String)) : Unit
@@ -94,5 +95,13 @@ namespace Tests.ExecutionPathTracer {
             ResetAll(qs);
         }
     }
-    
+
+    operation IfCirc() : Unit {
+        using (q = Qubit()) {
+            H(q);
+            let res = M(q);
+            ApplyIfElseR(res, (X, q), (Z, q));
+            Reset(q);
+        }
+    }
 }
